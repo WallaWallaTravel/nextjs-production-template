@@ -6,7 +6,7 @@
 
 'use client';
 
-import { User, Session } from '@supabase/supabase-js';
+import { AuthChangeEvent, User, Session } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
 
@@ -36,18 +36,20 @@ export function useAuth(): UseAuthReturn {
 
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const initSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       setState({
         user: session?.user ?? null,
         session,
         loading: false,
       });
-    });
+    };
+    initSession();
 
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
       setState({
         user: session?.user ?? null,
         session,

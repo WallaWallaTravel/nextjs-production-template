@@ -15,10 +15,6 @@ interface EnvConfig {
   NEXT_PUBLIC_SUPABASE_ANON_KEY: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
 
-  // Optional - Redis for distributed rate limiting
-  UPSTASH_REDIS_REST_URL?: string;
-  UPSTASH_REDIS_REST_TOKEN?: string;
-
   // Optional - Application
   NODE_ENV: 'development' | 'production' | 'test';
   NEXT_PUBLIC_APP_URL?: string;
@@ -29,7 +25,24 @@ interface EnvConfig {
   STRIPE_WEBHOOK_SECRET?: string;
 }
 
+// Check if we're in build mode (Next.js build phase)
+const isBuildTime = process.env.NEXT_PHASE === 'phase-production-build';
+
 function validateEnv(): EnvConfig {
+  // Skip validation during build - env vars will be validated at runtime
+  if (isBuildTime) {
+    return {
+      NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
+      SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
+      NODE_ENV: (process.env.NODE_ENV as EnvConfig['NODE_ENV']) || 'development',
+      NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+      RESEND_API_KEY: process.env.RESEND_API_KEY,
+      STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
+      STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
+    };
+  }
+
   const errors: string[] = [];
 
   // Required variables
@@ -72,10 +85,6 @@ function validateEnv(): EnvConfig {
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
 
-    // Optional Redis
-    UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
-    UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
-
     // Application
     NODE_ENV: (process.env.NODE_ENV as EnvConfig['NODE_ENV']) || 'development',
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
@@ -96,10 +105,8 @@ export function getEnv<K extends keyof EnvConfig>(key: K): EnvConfig[K] {
 }
 
 // Check if optional service is configured
-export function isServiceConfigured(service: 'redis' | 'email' | 'stripe'): boolean {
+export function isServiceConfigured(service: 'email' | 'stripe'): boolean {
   switch (service) {
-    case 'redis':
-      return !!(env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN);
     case 'email':
       return !!env.RESEND_API_KEY;
     case 'stripe':

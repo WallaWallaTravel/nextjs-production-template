@@ -36,8 +36,7 @@ project/
 │   ├── api/             # API routes
 │   └── (routes)/        # Page routes
 ├── lib/                  # Shared libraries
-│   ├── services/        # Business logic (BaseService pattern)
-│   ├── api/middleware/  # Error handling, validation, rate limiting
+│   ├── api/middleware/  # Error handling, validation
 │   ├── config/          # Environment and app configuration
 │   └── types/           # TypeScript types
 ├── components/           # React components
@@ -52,14 +51,11 @@ project/
 
 | File | Purpose |
 |------|---------|
-| `lib/services/base.service.ts` | Abstract base class for all services |
 | `lib/api/middleware/error-handler.ts` | Centralized error handling |
 | `lib/api/middleware/validation.ts` | Zod request validation |
-| `lib/api/middleware/rate-limit.ts` | Rate limiting with Redis fallback |
 | `lib/api/middleware/request-context.ts` | Correlation ID tracking |
 | `lib/api/response.ts` | Standardized API responses |
 | `lib/logger.ts` | Structured logging |
-| `lib/redis.ts` | Redis with graceful degradation |
 | `lib/supabase.ts` | Supabase client configuration |
 
 ## Code Patterns
@@ -68,7 +64,6 @@ project/
 ```typescript
 import { withErrorHandling } from '@/lib/api/middleware/error-handler';
 import { validateBody } from '@/lib/api/middleware/validation';
-import { withRateLimit, rateLimiters } from '@/lib/api/middleware/rate-limit';
 import { withRequestContext } from '@/lib/api/middleware/request-context';
 import { APIResponse } from '@/lib/api/response';
 import { z } from 'zod';
@@ -79,34 +74,30 @@ const schema = z.object({
 });
 
 export const POST = withRequestContext(
-  withRateLimit(rateLimiters.api)(
-    withErrorHandling(async (request) => {
-      const data = await validateBody(request, schema);
-      // Handler code
-      return APIResponse.success({ id: 1, ...data });
-    })
-  )
+  withErrorHandling(async (request) => {
+    const data = await validateBody(request, schema);
+    // Handler code
+    return APIResponse.success({ id: 1, ...data });
+  })
 );
 ```
 
-### Service Pattern
+### Supabase Data Access
 ```typescript
-import { BaseService } from '@/lib/services/base.service';
+import { supabase } from '@/lib/supabase';
 
-export class UserService extends BaseService {
-  protected get serviceName() { return 'UserService'; }
-  protected get tableName() { return 'users'; }
+// Fetch data
+const { data: users, error } = await supabase
+  .from('users')
+  .select('*')
+  .eq('is_active', true);
 
-  async getActiveUsers() {
-    return this.findWhere<User>({ is_active: true });
-  }
-
-  async createUser(data: CreateUserInput) {
-    return this.insert<User>(data);
-  }
-}
-
-export const userService = new UserService();
+// Insert data
+const { data: newUser, error } = await supabase
+  .from('users')
+  .insert({ name: 'John', email: 'john@example.com' })
+  .select()
+  .single();
 ```
 
 ## Environment Variables
@@ -117,10 +108,6 @@ Required in `.env.local`:
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-
-# Redis - Optional (falls back to in-memory)
-UPSTASH_REDIS_REST_URL=your_redis_url
-UPSTASH_REDIS_REST_TOKEN=your_redis_token
 
 # Email - Optional
 RESEND_API_KEY=your_resend_key

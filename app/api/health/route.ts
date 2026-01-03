@@ -1,16 +1,15 @@
 import { NextResponse } from 'next/server';
 
 import { logger } from '@/lib/logger';
-import { redis } from '@/lib/redis';
 import { supabase } from '@/lib/supabase';
 
 interface HealthStatus {
-  status: 'healthy' | 'degraded' | 'unhealthy';
+  status: 'healthy' | 'unhealthy';
   timestamp: string;
   version: string;
   checks: {
     name: string;
-    status: 'pass' | 'fail' | 'warn';
+    status: 'pass' | 'fail';
     message?: string;
     responseTime?: number;
   }[];
@@ -46,34 +45,9 @@ export async function GET() {
     logger.error('Health check: Supabase connection failed', { error: message });
   }
 
-  // Check Redis connection
-  try {
-    const redisStatus = redis.getStatus();
-    checks.push({
-      name: 'redis',
-      status: redisStatus.available ? 'pass' : 'warn',
-      message: redisStatus.available
-        ? `Redis connected (${redisStatus.mode})`
-        : 'Using in-memory fallback',
-    });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    checks.push({
-      name: 'redis',
-      status: 'warn',
-      message: `Redis check failed, using fallback: ${message}`,
-    });
-  }
-
   // Determine overall status
   const hasFailure = checks.some((c) => c.status === 'fail');
-  const hasWarning = checks.some((c) => c.status === 'warn');
-
-  const overallStatus: HealthStatus['status'] = hasFailure
-    ? 'unhealthy'
-    : hasWarning
-      ? 'degraded'
-      : 'healthy';
+  const overallStatus: HealthStatus['status'] = hasFailure ? 'unhealthy' : 'healthy';
 
   const response: HealthStatus = {
     status: overallStatus,

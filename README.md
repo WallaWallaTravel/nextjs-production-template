@@ -42,12 +42,11 @@ A comprehensive Next.js 15 template with full-stack infrastructure, designed to 
 - Example stores included
 - `createEntityStore` factory for CRUD operations
 
-### Reliability Infrastructure
-- **Rate Limiting** - Redis (Upstash) with in-memory fallback
-- **Circuit Breaker** - Graceful degradation
+### API Infrastructure
 - **Correlation IDs** - Request tracing
 - **Structured Logging** - Environment-aware levels
 - **Error Handling** - Standardized API responses
+- **Request Validation** - Zod schema validation
 
 ### Additional Features
 - **Email** - Resend integration with templates
@@ -93,9 +92,7 @@ npm run dev
 │   ├── auth/               # Auth utilities
 │   ├── config/             # Configuration
 │   ├── email/              # Email templates
-│   ├── reliability/        # Circuit breaker
 │   ├── seo/                # SEO helpers
-│   ├── services/           # Base service class
 │   ├── storage/            # File upload helpers
 │   └── store/              # Zustand stores
 ├── types/                   # TypeScript types
@@ -211,7 +208,6 @@ function CreateUserForm() {
 ```typescript
 import { withErrorHandling } from '@/lib/api/middleware/error-handler';
 import { validateBody } from '@/lib/api/middleware/validation';
-import { withRateLimit, rateLimiters } from '@/lib/api/middleware/rate-limit';
 import { withRequestContext } from '@/lib/api/middleware/request-context';
 import { APIResponse } from '@/lib/api/response';
 import { z } from 'zod';
@@ -222,13 +218,11 @@ const schema = z.object({
 });
 
 export const POST = withRequestContext(
-  withRateLimit(rateLimiters.api)(
-    withErrorHandling(async (request) => {
-      const data = await validateBody(request, schema);
-      // Your logic here
-      return APIResponse.success({ id: 1, ...data });
-    })
-  )
+  withErrorHandling(async (request) => {
+    const data = await validateBody(request, schema);
+    // Your logic here
+    return APIResponse.success({ id: 1, ...data });
+  })
 );
 ```
 
@@ -283,7 +277,6 @@ See `.env.example` for all options.
 - `SUPABASE_SERVICE_ROLE_KEY`
 
 **Optional:**
-- `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` - Distributed rate limiting
 - `RESEND_API_KEY` / `RESEND_FROM_EMAIL` - Email
 - `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` - Payments
 
