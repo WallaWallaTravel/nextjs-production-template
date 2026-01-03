@@ -4,8 +4,8 @@
  * Provides file upload and management using Supabase Storage.
  */
 
-import { getSupabaseAdmin } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
+import { getSupabaseAdmin } from '@/lib/supabase';
 
 // ============================================================================
 // Types

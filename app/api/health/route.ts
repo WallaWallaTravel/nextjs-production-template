@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 
+import { logger } from '@/lib/logger';
 import { redis } from '@/lib/redis';
 import { supabase } from '@/lib/supabase';
-import { logger } from '@/lib/logger';
 
 interface HealthStatus {
   status: 'healthy' | 'degraded' | 'unhealthy';

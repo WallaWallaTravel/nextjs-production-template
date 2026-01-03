@@ -6,6 +6,7 @@
  */
 
 import { Resend } from 'resend';
+
 import { logger } from '@/lib/logger';
 
 // ============================================================================
@@ -69,16 +70,19 @@ export async function sendEmail(options: EmailOptions): Promise<EmailResult> {
   }
 
   try {
-    const { data, error } = await client.emails.send({
+    // Build email payload - Resend requires html or react
+    const emailPayload = {
       from: `${FROM_NAME} <${FROM_EMAIL}>`,
       to: Array.isArray(options.to) ? options.to : [options.to],
       subject: options.subject,
-      html: options.html,
-      text: options.text,
-      reply_to: options.replyTo,
-      cc: options.cc ? (Array.isArray(options.cc) ? options.cc : [options.cc]) : undefined,
-      bcc: options.bcc ? (Array.isArray(options.bcc) ? options.bcc : [options.bcc]) : undefined,
-    });
+      ...(options.html && { html: options.html }),
+      ...(options.text && { text: options.text }),
+      ...(options.replyTo && { replyTo: options.replyTo }),
+      ...(options.cc && { cc: Array.isArray(options.cc) ? options.cc : [options.cc] }),
+      ...(options.bcc && { bcc: Array.isArray(options.bcc) ? options.bcc : [options.bcc] }),
+    };
+
+    const { data, error } = await client.emails.send(emailPayload as Parameters<typeof client.emails.send>[0]);
 
     if (error) {
       logger.error('Failed to send email', { error: error.message, to: options.to });

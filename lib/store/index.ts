@@ -105,6 +105,7 @@ export const useItemsStore = create<ItemsState>()(
 
 /**
  * Create a simple store with common patterns
+ * Uses plain state updates (no immer) for better type inference with generics
  */
 export function createEntityStore<T extends { id: string }>(name: string) {
   return create<{
@@ -119,7 +120,7 @@ export function createEntityStore<T extends { id: string }>(name: string) {
     setError: (error: string | null) => void;
   }>()(
     devtools(
-      immer((set) => ({
+      (set) => ({
         entities: [],
         loading: false,
         error: null,
@@ -127,26 +128,25 @@ export function createEntityStore<T extends { id: string }>(name: string) {
         setEntities: (entities) => set({ entities }),
 
         addEntity: (entity) =>
-          set((state) => {
-            state.entities.push(entity);
-          }),
+          set((state) => ({
+            entities: [...state.entities, entity],
+          })),
 
         updateEntity: (id, updates) =>
-          set((state) => {
-            const index = state.entities.findIndex((e) => e.id === id);
-            if (index !== -1) {
-              state.entities[index] = { ...state.entities[index], ...updates };
-            }
-          }),
+          set((state) => ({
+            entities: state.entities.map((e) =>
+              e.id === id ? { ...e, ...updates } : e
+            ),
+          })),
 
         removeEntity: (id) =>
-          set((state) => {
-            state.entities = state.entities.filter((e) => e.id !== id);
-          }),
+          set((state) => ({
+            entities: state.entities.filter((e) => e.id !== id),
+          })),
 
         setLoading: (loading) => set({ loading }),
         setError: (error) => set({ error }),
-      })),
+      }),
       { name }
     )
   );

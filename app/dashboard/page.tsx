@@ -1,5 +1,5 @@
-import { requireAuth } from '@/lib/auth';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
+import { requireAuth } from '@/lib/auth';
 
 export default async function DashboardPage() {
   const user = await requireAuth();

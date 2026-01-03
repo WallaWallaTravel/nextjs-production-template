@@ -1,5 +1,6 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
 import { ReactNode } from 'react';
 import {
   useForm,
@@ -11,7 +12,6 @@ import {
   SubmitErrorHandler,
   FormProvider,
 } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { ZodSchema } from 'zod';
 
 // ============================================================================
@@ -19,7 +19,7 @@ import { ZodSchema } from 'zod';
 // ============================================================================
 
 export interface FormProps<T extends FieldValues>
-  extends Omit<React.FormHTMLAttributes<HTMLFormElement>, 'onSubmit' | 'onError'> {
+  extends Omit<React.FormHTMLAttributes<HTMLFormElement>, 'onSubmit' | 'onError' | 'children'> {
   schema: ZodSchema<T>;
   onSubmit: SubmitHandler<T>;
   onError?: SubmitErrorHandler<T>;

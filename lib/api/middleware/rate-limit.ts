@@ -7,8 +7,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { rateLimit as redisRateLimit, isRedisAvailable } from '@/lib/redis';
+
 import { logger } from '@/lib/logger';
+import { rateLimit as redisRateLimit, isRedisAvailable } from '@/lib/redis';
 
 interface RateLimiterConfig {
   maxAttempts: number;

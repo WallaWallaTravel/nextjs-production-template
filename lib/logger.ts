@@ -21,14 +21,9 @@ interface LogContext {
   [key: string]: unknown;
 }
 
-// Try to import request context (may not be available in all environments)
-let getRequestId: () => string = () => '';
-try {
-  const requestContext = require('./api/middleware/request-context');
-  getRequestId = requestContext.getRequestId;
-} catch {
-  // Request context not available
-}
+// Request ID getter - returns empty string by default
+// Can be enhanced to use AsyncLocalStorage for request context if needed
+const getRequestId: () => string = () => '';
 
 interface LogEntry {
   level: LogLevel;

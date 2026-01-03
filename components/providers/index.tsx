@@ -1,8 +1,10 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { QueryProvider } from './QueryProvider';
+
 import { ToastProvider } from '@/components/ui/Toast';
+
+import { QueryProvider } from './QueryProvider';
 
 /**
  * Application Providers

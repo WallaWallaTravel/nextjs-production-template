@@ -11,7 +11,6 @@ import {
   useMutation,
   useQueryClient,
   UseQueryOptions,
-  UseMutationOptions,
 } from '@tanstack/react-query';
 
 import { api, APIClientError } from '@/lib/api/client';
@@ -40,16 +39,15 @@ export function useApiQuery<T>(
  */
 export function useApiMutation<TData, TVariables>(
   path: string,
-  options?: Omit<
-    UseMutationOptions<TData, APIClientError, TVariables>,
-    'mutationFn'
-  > & {
+  options?: {
     method?: 'POST' | 'PUT' | 'PATCH' | 'DELETE';
     invalidateQueries?: string[][];
+    onSuccess?: (data: TData) => void;
+    onError?: (error: APIClientError) => void;
   }
 ) {
   const queryClient = useQueryClient();
-  const { method = 'POST', invalidateQueries, ...mutationOptions } = options || {};
+  const { method = 'POST', invalidateQueries, onSuccess, onError } = options || {};
 
   return useMutation<TData, APIClientError, TVariables>({
     mutationFn: async (variables: TVariables) => {
@@ -64,16 +62,16 @@ export function useApiMutation<TData, TVariables>(
           return api.delete<TData>(path);
       }
     },
-    onSuccess: (data, variables, context) => {
+    onSuccess: (data) => {
       // Invalidate specified queries on success
       if (invalidateQueries) {
         invalidateQueries.forEach((queryKey) => {
           queryClient.invalidateQueries({ queryKey });
         });
       }
-      mutationOptions.onSuccess?.(data, variables, context);
+      onSuccess?.(data);
     },
-    ...mutationOptions,
+    onError,
   });
 }
 
@@ -130,7 +128,7 @@ export function usePaginatedQuery<T>(
 /**
  * Create an optimistic update mutation
  */
-export function useOptimisticMutation<TData, TVariables, TContext = unknown>(
+export function useOptimisticMutation<TData, TVariables>(
   queryKey: string[],
   path: string,
   options: {
@@ -139,13 +137,11 @@ export function useOptimisticMutation<TData, TVariables, TContext = unknown>(
       oldData: TData | undefined,
       variables: TVariables
     ) => TData;
-  } & Omit<
-    UseMutationOptions<TData, APIClientError, TVariables, TContext>,
-    'mutationFn' | 'onMutate' | 'onError' | 'onSettled'
-  >
+    onSuccess?: (data: TData) => void;
+  }
 ) {
   const queryClient = useQueryClient();
-  const { method = 'POST', optimisticUpdate, ...mutationOptions } = options;
+  const { method = 'POST', optimisticUpdate, onSuccess } = options;
 
   return useMutation<TData, APIClientError, TVariables, { previousData: TData | undefined }>({
     mutationFn: async (variables: TVariables) => {
@@ -184,6 +180,6 @@ export function useOptimisticMutation<TData, TVariables, TContext = unknown>(
       // Refetch after mutation
       queryClient.invalidateQueries({ queryKey });
     },
-    ...mutationOptions,
+    onSuccess,
   });
 }

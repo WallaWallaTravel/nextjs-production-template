@@ -21,8 +21,9 @@
  */
 
 import { SupabaseClient } from '@supabase/supabase-js';
-import { getSupabaseAdmin } from '@/lib/supabase';
+
 import { logger } from '@/lib/logger';
+import { getSupabaseAdmin } from '@/lib/supabase';
 
 export interface PaginationParams {
   limit?: number;
@@ -249,8 +250,8 @@ export abstract class BaseService {
     returning: string = '*'
   ): Promise<T | null> {
     try {
-      const updates = { ...data, updated_at: new Date().toISOString() };
-      delete updates.id; // Don't allow updating ID
+      const { id: _id, ...rest } = data as Record<string, unknown> & { id?: unknown };
+      const updates = { ...rest, updated_at: new Date().toISOString() };
 
       const { data: result, error } = await this.supabase
         .from(this.tableName)

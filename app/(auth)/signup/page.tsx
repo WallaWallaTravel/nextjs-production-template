@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/Card';
+import { Input } from '@/components/ui/Input';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function SignUpPage() {

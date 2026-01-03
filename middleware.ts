@@ -5,8 +5,9 @@
  * Runs before every request to protected routes.
  */
 
-import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import type { ResponseCookie } from 'next/dist/compiled/@edge-runtime/cookies';
 
 // Routes that require authentication
 const protectedRoutes = ['/dashboard', '/settings', '/profile'];
@@ -41,8 +42,8 @@ export async function middleware(request: NextRequest) {
         getAll() {
           return request.cookies.getAll();
         },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
+        setAll(cookiesToSet: { name: string; value: string; options?: Partial<ResponseCookie> }[]) {
+          cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           );
           response = NextResponse.next({
