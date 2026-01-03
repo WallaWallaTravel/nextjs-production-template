@@ -1,25 +1,65 @@
 # Production-Ready Next.js Template
 
-A professional-grade Next.js 15 template with built-in reliability infrastructure, designed for production deployments.
+A comprehensive Next.js 15 template with full-stack infrastructure, designed to start building immediately.
 
 ## Features
 
+### Core Stack
 - **Next.js 15** with App Router and React 19
-- **TypeScript** with strict mode configuration
-- **Supabase** integration for database and auth
-- **Distributed Rate Limiting** with Redis (Upstash) + in-memory fallback
-- **Circuit Breaker Pattern** for graceful degradation
-- **Correlation ID Tracking** for distributed tracing
-- **Structured Logging** with environment-aware levels
-- **Standardized API Responses** with error handling
-- **Zod Validation** for request validation
-- **Claude Code Integration** with project-specific commands
+- **TypeScript** with strict mode
+- **Tailwind CSS** for styling
+- **Supabase** for database, auth, and file storage
+
+### Authentication
+- Supabase Auth with SSR support
+- Protected route middleware
+- Login/signup pages ready to use
+- OAuth callback handling
+- `useAuth` hook for client-side auth
+
+### UI Components
+- **Button** - Variants (primary, secondary, outline, ghost, danger), sizes, loading state
+- **Input/Textarea** - Label, error, and hint support
+- **Card** - With header, content, and footer
+- **Modal** - Standard and confirmation dialogs
+- **Toast** - Notification system with auto-dismiss
+- **Spinner** - Loading indicators
+- **Skeleton** - Content loading placeholders
+
+### Data Fetching
+- **React Query** (TanStack Query v5)
+- Typed API client with error handling
+- Custom hooks: `useApiQuery`, `useApiMutation`, `usePaginatedQuery`
+- Optimistic update support
+
+### Forms
+- **React Hook Form** with Zod validation
+- Reusable form components: Input, Select, Checkbox, Radio
+- Automatic error display
+
+### State Management
+- **Zustand** with immer middleware
+- Example stores included
+- `createEntityStore` factory for CRUD operations
+
+### Reliability Infrastructure
+- **Rate Limiting** - Redis (Upstash) with in-memory fallback
+- **Circuit Breaker** - Graceful degradation
+- **Correlation IDs** - Request tracing
+- **Structured Logging** - Environment-aware levels
+- **Error Handling** - Standardized API responses
+
+### Additional Features
+- **Email** - Resend integration with templates
+- **File Storage** - Supabase Storage helpers
+- **SEO** - Metadata generators, sitemap, robots.txt
+- **Testing** - Jest setup with example tests
 
 ## Quick Start
 
 ```bash
 # Clone this template
-git clone <repo-url> my-project
+git clone https://github.com/WallaWallaTravel/nextjs-production-template.git my-project
 cd my-project
 
 # Install dependencies
@@ -28,7 +68,7 @@ npm install
 # Copy environment variables
 cp .env.example .env.local
 
-# Configure your Supabase credentials in .env.local
+# Configure your credentials in .env.local
 
 # Run development server
 npm run dev
@@ -38,86 +78,186 @@ npm run dev
 
 ```
 ├── .claude/                 # Claude Code configuration
-│   ├── CLAUDE.md           # Project context
-│   ├── commands/           # Slash commands
-│   └── settings.local.json # Permissions
-├── app/                     # Next.js App Router
-│   ├── api/                # API routes
-│   └── (pages)/            # Page routes
+├── app/
+│   ├── (auth)/             # Auth pages (login, signup)
+│   ├── api/v1/             # API routes
+│   ├── auth/callback/      # OAuth callback
+│   └── dashboard/          # Protected example page
+├── components/
+│   ├── ui/                 # UI components
+│   ├── forms/              # Form components
+│   └── providers/          # React providers
+├── hooks/                   # Custom hooks
 ├── lib/
-│   ├── services/           # Business logic (BaseService)
-│   ├── api/middleware/     # Error handling, validation, rate limiting
-│   ├── config/             # Environment and app config
-│   ├── logger.ts           # Structured logging
-│   ├── redis.ts            # Redis with fallback
-│   └── supabase.ts         # Supabase client
-├── components/              # React components
-└── types/                   # TypeScript types
+│   ├── api/                # API client and middleware
+│   ├── auth/               # Auth utilities
+│   ├── config/             # Configuration
+│   ├── email/              # Email templates
+│   ├── reliability/        # Circuit breaker
+│   ├── seo/                # SEO helpers
+│   ├── services/           # Base service class
+│   ├── storage/            # File upload helpers
+│   └── store/              # Zustand stores
+├── types/                   # TypeScript types
+└── __tests__/              # Test files
 ```
 
-## Reliability Infrastructure
+## Usage Examples
 
-### Rate Limiting
+### Authentication
 
-Pre-configured rate limiters for different use cases:
+```tsx
+// Client-side auth
+import { useAuth } from '@/hooks/useAuth';
 
-```typescript
-import { withRateLimit, rateLimiters } from '@/lib/api/middleware/rate-limit';
+function LoginButton() {
+  const { signIn, isLoading } = useAuth();
 
-// Auth endpoints: 5 requests per 15 minutes
-export const POST = withRateLimit(rateLimiters.auth)(handler);
+  const handleLogin = async () => {
+    await signIn('user@example.com', 'password');
+  };
 
-// General API: 100 requests per minute
-export const GET = withRateLimit(rateLimiters.api)(handler);
+  return <Button onClick={handleLogin} loading={isLoading}>Login</Button>;
+}
 
-// Payment endpoints: 10 requests per minute
-export const POST = withRateLimit(rateLimiters.payment)(handler);
+// Server-side protected route
+import { requireAuth } from '@/lib/auth';
+
+export default async function DashboardPage() {
+  const user = await requireAuth(); // Redirects if not authenticated
+  return <h1>Welcome, {user.email}</h1>;
+}
 ```
 
-### Error Handling
+### UI Components
 
-Consistent error responses with custom error classes:
+```tsx
+import { Button, Card, Input, Modal, Toast, useToast } from '@/components/ui';
 
-```typescript
-import { withErrorHandling, NotFoundError } from '@/lib/api/middleware/error-handler';
+function MyComponent() {
+  const { toast } = useToast();
 
-export const GET = withErrorHandling(async (request) => {
-  const item = await findItem(id);
-  if (!item) {
-    throw new NotFoundError('Item', id);
-  }
-  return APIResponse.success(item);
+  return (
+    <Card>
+      <CardHeader>
+        <h2>Form</h2>
+      </CardHeader>
+      <CardContent>
+        <Input label="Email" type="email" />
+        <Button onClick={() => toast({ type: 'success', message: 'Saved!' })}>
+          Submit
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+```
+
+### Data Fetching
+
+```tsx
+import { useApiQuery, useApiMutation } from '@/hooks/useApiQuery';
+
+function UsersList() {
+  const { data: users, isLoading } = useApiQuery<User[]>('users', '/api/v1/users');
+  const createUser = useApiMutation<User>('/api/v1/users', 'POST', {
+    invalidateKeys: ['users'],
+  });
+
+  if (isLoading) return <Skeleton />;
+
+  return (
+    <>
+      {users?.map(user => <UserCard key={user.id} user={user} />)}
+      <Button onClick={() => createUser.mutate({ name: 'New User' })}>
+        Add User
+      </Button>
+    </>
+  );
+}
+```
+
+### Forms
+
+```tsx
+import { Form, FormInput, FormSelect } from '@/components/forms';
+import { z } from 'zod';
+
+const schema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  role: z.enum(['admin', 'user']),
 });
+
+function CreateUserForm() {
+  const handleSubmit = async (data: z.infer<typeof schema>) => {
+    await api.post('/api/v1/users', data);
+  };
+
+  return (
+    <Form schema={schema} onSubmit={handleSubmit}>
+      <FormInput name="name" label="Name" />
+      <FormSelect name="role" label="Role" options={[
+        { value: 'admin', label: 'Admin' },
+        { value: 'user', label: 'User' },
+      ]} />
+      <Button type="submit">Create</Button>
+    </Form>
+  );
+}
 ```
 
-### Request Validation
-
-Zod-powered request validation:
+### API Routes
 
 ```typescript
+import { withErrorHandling } from '@/lib/api/middleware/error-handler';
 import { validateBody } from '@/lib/api/middleware/validation';
+import { withRateLimit, rateLimiters } from '@/lib/api/middleware/rate-limit';
+import { withRequestContext } from '@/lib/api/middleware/request-context';
+import { APIResponse } from '@/lib/api/response';
+import { z } from 'zod';
 
-const CreateUserSchema = z.object({
-  email: z.string().email(),
+const schema = z.object({
   name: z.string().min(1),
+  email: z.string().email(),
 });
 
-export const POST = withErrorHandling(async (request) => {
-  const data = await validateBody(request, CreateUserSchema);
-  // data is typed as { email: string; name: string }
+export const POST = withRequestContext(
+  withRateLimit(rateLimiters.api)(
+    withErrorHandling(async (request) => {
+      const data = await validateBody(request, schema);
+      // Your logic here
+      return APIResponse.success({ id: 1, ...data });
+    })
+  )
+);
+```
+
+### Email
+
+```typescript
+import { sendEmail, emailTemplates } from '@/lib/email';
+
+// Send welcome email
+await sendEmail({
+  to: 'user@example.com',
+  subject: 'Welcome!',
+  html: emailTemplates.welcome('John'),
 });
 ```
 
-### Correlation IDs
-
-Automatic request tracing:
+### File Upload
 
 ```typescript
-import { withRequestContext } from '@/lib/api/middleware/request-context';
+import { uploadFile, getPublicUrl } from '@/lib/storage';
 
-export const GET = withRequestContext(handler);
-// Response includes x-request-id header
-// All logs include requestId
+// Upload a file
+const result = await uploadFile('avatars', file, {
+  contentType: file.type,
+});
+
+if (result.success) {
+  const url = getPublicUrl('avatars', result.path);
+}
 ```
 
 ## Available Scripts
@@ -128,13 +268,14 @@ export const GET = withRequestContext(handler);
 | `npm run build` | Build for production |
 | `npm run start` | Start production server |
 | `npm run lint` | Run ESLint |
-| `npm run type-check` | TypeScript type checking |
-| `npm run test` | Run Jest tests |
-| `npm run test:coverage` | Run tests with coverage |
+| `npm run type-check` | TypeScript checking |
+| `npm run test` | Run tests |
+| `npm run test:coverage` | Tests with coverage |
+| `npm run generate-types` | Generate Supabase types |
 
 ## Environment Variables
 
-See `.env.example` for all available configuration options.
+See `.env.example` for all options.
 
 **Required:**
 - `NEXT_PUBLIC_SUPABASE_URL`
@@ -142,14 +283,11 @@ See `.env.example` for all available configuration options.
 - `SUPABASE_SERVICE_ROLE_KEY`
 
 **Optional:**
-- `UPSTASH_REDIS_REST_URL` - For distributed rate limiting
-- `UPSTASH_REDIS_REST_TOKEN`
-- `RESEND_API_KEY` - For email
-- `STRIPE_SECRET_KEY` - For payments
+- `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` - Distributed rate limiting
+- `RESEND_API_KEY` / `RESEND_FROM_EMAIL` - Email
+- `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` - Payments
 
 ## Claude Code Commands
-
-This template includes Claude Code integration:
 
 | Command | Description |
 |---------|-------------|
