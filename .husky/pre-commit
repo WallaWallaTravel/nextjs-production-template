@@ -1,0 +1,22 @@
+#!/bin/sh
+# Pre-commit hook: runs quality checks before allowing commit
+
+echo "Running pre-commit checks..."
+
+# Type check
+echo "Running TypeScript check..."
+npm run type-check
+if [ $? -ne 0 ]; then
+  echo "TypeScript errors found. Please fix before committing."
+  exit 1
+fi
+
+# Lint
+echo "Running ESLint..."
+npm run lint
+if [ $? -ne 0 ]; then
+  echo "Linting errors found. Please fix before committing."
+  exit 1
+fi
+
+echo "Pre-commit checks passed!"

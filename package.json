@@ -14,12 +14,18 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "generate-types": "./scripts/generate-types.sh",
+    "db:migrate": "./scripts/db-migrate.sh",
+    "db:seed": "./scripts/db-seed.sh",
+    "db:reset": "./scripts/db-reset.sh",
     "prepare": "husky"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
+    "@sentry/nextjs": "^8.0.0",
     "@supabase/ssr": "^0.5.0",
     "@supabase/supabase-js": "^2.45.0",
+    "@vercel/analytics": "^1.3.0",
+    "@vercel/speed-insights": "^1.0.0",
     "@tanstack/react-query": "^5.60.0",
     "@tanstack/react-query-devtools": "^5.60.0",
     "immer": "^10.1.0",

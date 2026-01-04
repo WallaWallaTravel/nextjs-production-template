@@ -10,6 +10,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { logger } from '@/lib/logger';
+import { captureException } from '@/lib/monitoring';
 
 // ============================================================================
 // Custom Error Classes
@@ -170,6 +171,14 @@ export function withErrorHandling<T = unknown>(
         duration,
         error,
       });
+
+      // Report to Sentry (only for 500 errors)
+      if (!(error instanceof ApiError) || error.statusCode >= 500) {
+        captureException(error, {
+          tags: { requestId, method: request.method },
+          extra: { url: request.url, duration },
+        });
+      }
 
       // Handle ApiError
       if (error instanceof ApiError) {

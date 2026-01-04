@@ -60,7 +60,7 @@ describe('API Client', () => {
 
   describe('error handling', () => {
     it('throws APIClientError on API error response', async () => {
-      global.fetch = jest.fn().mockResolvedValueOnce({
+      const errorResponse = {
         ok: false,
         status: 404,
         json: async () => ({
@@ -71,23 +71,32 @@ describe('API Client', () => {
             statusCode: 404,
           },
         }),
-      });
+      };
+      global.fetch = jest.fn().mockResolvedValue(errorResponse);
 
-      await expect(api.get('/api/users/999')).rejects.toThrow(APIClientError);
-      await expect(api.get('/api/users/999')).rejects.toMatchObject({
-        code: 'NOT_FOUND',
-        message: 'User not found',
-        statusCode: 404,
-      });
+      try {
+        await api.get('/api/users/999');
+        fail('Expected APIClientError to be thrown');
+      } catch (error) {
+        expect(error).toBeInstanceOf(APIClientError);
+        expect(error).toMatchObject({
+          code: 'NOT_FOUND',
+          message: 'User not found',
+          statusCode: 404,
+        });
+      }
     });
 
     it('handles network errors', async () => {
-      global.fetch = jest.fn().mockRejectedValueOnce(new Error('Network error'));
+      global.fetch = jest.fn().mockRejectedValue(new Error('Network error'));
 
-      await expect(api.get('/api/users')).rejects.toThrow(APIClientError);
-      await expect(api.get('/api/users')).rejects.toMatchObject({
-        code: 'NETWORK_ERROR',
-      });
+      try {
+        await api.get('/api/users');
+        fail('Expected APIClientError to be thrown');
+      } catch (error) {
+        expect(error).toBeInstanceOf(APIClientError);
+        expect((error as APIClientError).code).toBe('NETWORK_ERROR');
+      }
     });
   });
 });

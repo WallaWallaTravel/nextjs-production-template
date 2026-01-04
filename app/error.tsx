@@ -1,5 +1,6 @@
 'use client';
 
+import * as Sentry from '@sentry/nextjs';
 import { useEffect } from 'react';
 
 import { Button } from '@/components/ui/Button';
@@ -8,6 +9,7 @@ import { Button } from '@/components/ui/Button';
  * Global Error Boundary
  *
  * Catches errors in the application and displays a fallback UI.
+ * Reports errors to Sentry for monitoring.
  */
 export default function Error({
   error,
@@ -17,8 +19,11 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Log error to monitoring service
-    console.error('Application error:', error);
+    // Report error to Sentry
+    Sentry.captureException(error, {
+      tags: { component: 'error-boundary' },
+      extra: { digest: error.digest },
+    });
   }, [error]);
 
   return (

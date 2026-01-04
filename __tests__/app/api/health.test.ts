@@ -3,15 +3,8 @@
  */
 
 import { GET } from '@/app/api/health/route';
-import { NextRequest } from 'next/server';
 
 // Mock dependencies
-jest.mock('@/lib/redis', () => ({
-  redis: {
-    getStatus: jest.fn(() => ({ available: true, mode: 'memory' })),
-  },
-}));
-
 jest.mock('@/lib/supabase', () => ({
   supabase: {
     from: jest.fn(() => ({
@@ -31,7 +24,6 @@ jest.mock('@/lib/logger', () => ({
 
 describe('GET /api/health', () => {
   it('returns healthy status when all services are up', async () => {
-    const request = new NextRequest('http://localhost:3000/api/health');
     const response = await GET();
     const data = await response.json();
 
@@ -48,12 +40,20 @@ describe('GET /api/health', () => {
     expect(data.version).toBeDefined();
   });
 
-  it('includes health checks for database and redis', async () => {
+  it('includes health check for database', async () => {
     const response = await GET();
     const data = await response.json();
 
     const checkNames = data.checks.map((c: { name: string }) => c.name);
     expect(checkNames).toContain('database');
-    expect(checkNames).toContain('redis');
+  });
+
+  it('returns valid ISO timestamp', async () => {
+    const response = await GET();
+    const data = await response.json();
+
+    const timestamp = new Date(data.timestamp);
+    expect(timestamp).toBeInstanceOf(Date);
+    expect(isNaN(timestamp.getTime())).toBe(false);
   });
 });
